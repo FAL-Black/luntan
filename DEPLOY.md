@@ -56,6 +56,11 @@ User=root
 Group=root
 WorkingDirectory=/var/www/luntan/backend
 Environment="PATH=/var/www/luntan/backend/venv/bin"
+# 设置数据库环境变量 (请替换为您设置的密码)
+Environment="DB_USER=luntan_user"
+Environment="DB_PASSWORD=password123"
+Environment="DB_HOST=localhost"
+Environment="DB_NAME=luntan"
 ExecStart=/var/www/luntan/backend/venv/bin/uvicorn main:app --host 0.0.0.0 --port 8000
 
 [Install]
