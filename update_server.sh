@@ -30,7 +30,13 @@ npm install
 echo "构建前端资源..."
 npm run build
 
-# 4. 重启服务
+# 4. 权限修正 (确保 Nginx 可以读取)
+echo "🔒 修正文件权限..."
+cd ..
+sudo chown -R root:root .
+sudo chmod -R 755 .
+
+# 5. 重启服务
 echo "🔄 重启服务..."
 sudo systemctl restart luntan-backend
 # Nginx 通常不需要重启，除非改了 nginx 配置文件
