@@ -98,6 +98,25 @@ const handleLogin = async () => {
   transition: transform 0.3s ease;
 }
 
+/* 移动端适配 */
+@media (max-width: 480px) {
+  .login-wrapper {
+    align-items: flex-start;
+    padding-top: 3rem;
+    background: #fff; /* 移动端可能更喜欢纯白背景 */
+  }
+
+  .login-card {
+    box-shadow: none;
+    padding: 1.5rem;
+    border-radius: 0;
+  }
+
+  .card-header h2 {
+    font-size: 1.5rem;
+  }
+}
+
 .login-card:hover {
   transform: translateY(-5px);
   box-shadow: 0 15px 30px rgba(0,0,0,0.1);

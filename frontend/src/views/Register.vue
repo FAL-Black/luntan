@@ -121,6 +121,25 @@ const handleRegister = async () => {
   transition: transform 0.3s ease;
 }
 
+/* 移动端适配 */
+@media (max-width: 480px) {
+  .register-wrapper {
+    align-items: flex-start;
+    padding-top: 2rem;
+    background: #fff;
+  }
+
+  .register-card {
+    box-shadow: none;
+    padding: 1.5rem;
+    border-radius: 0;
+  }
+  
+  .card-header h2 {
+    font-size: 1.5rem;
+  }
+}
+
 .register-card:hover {
   transform: translateY(-5px);
   box-shadow: 0 15px 30px rgba(0,0,0,0.1);
