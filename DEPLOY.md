@@ -85,6 +85,8 @@ npm run build
 
 编辑 `/etc/nginx/conf.d/luntan.conf`:
 
+> **注意**：复制时请务必小心，不要把代码块标记（如 ```nginx）也复制进去了。文件内容应以 `server {` 开头。
+
 ```nginx
 server {
     listen 80;
@@ -119,6 +121,8 @@ server {
 }
 ```
 
+**注意**：如果 `/etc/nginx/nginx.conf` 中已有默认的 `server` 块，可能需要将其注释掉以免端口冲突。
+
 重启 Nginx：
 ```bash
 sudo systemctl restart nginx
@@ -133,3 +137,33 @@ sudo systemctl enable nginx
 sudo firewall-cmd --permanent --add-service=http
 sudo firewall-cmd --reload
 ```
+
+## 7. 常见问题排查 (Troubleshooting)
+
+### Nginx 启动失败
+
+如果 `systemctl restart nginx` 失败，请尝试以下步骤：
+
+1.  **检查配置文件语法**：
+    ```bash
+    sudo nginx -t
+    ```
+    这会直接告诉你配置文件哪一行写错了。
+
+2.  **SELinux 权限问题 (CentOS 特有)**：
+    CentOS 默认开启 SELinux，这通常是导致 Nginx 无法启动或访问文件的原因。
+
+    *   **允许 Nginx 网络连接 (解决 502 Bad Gateway)**:
+        ```bash
+        sudo setsebool -P httpd_can_network_connect 1
+        ```
+    *   **允许 Nginx 读取前端文件 (解决 403 Forbidden)**:
+        ```bash
+        sudo chcon -R -t httpd_sys_content_t /var/www/luntan/frontend/dist
+        ```
+
+3.  **端口冲突**：
+    检查 80 端口是否被占用：
+    ```bash
+    sudo ss -tuln | grep :80
+    ```

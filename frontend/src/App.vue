@@ -6,8 +6,10 @@ const serverInfo = ref(null)
 
 const fetchData = async () => {
   try {
-    // 尝试连接后端 API
-    const res = await fetch('http://localhost:8000/')
+    // 使用相对路径，通过 Nginx 代理访问
+    // 对应后端 /api/ 路由
+    const res = await fetch('/api/')
+    if (!res.ok) throw new Error(res.statusText)
     const data = await res.json()
     message.value = data.message
   } catch (error) {
@@ -16,7 +18,7 @@ const fetchData = async () => {
   }
 
   try {
-    const res = await fetch('http://localhost:8000/api/info')
+    const res = await fetch('/api/info')
     if (res.ok) {
         serverInfo.value = await res.json()
     }
