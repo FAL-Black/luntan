@@ -1,4 +1,7 @@
-from fastapi import FastAPI, Depends, HTTPException, status
+import os
+import shutil
+from fastapi import FastAPI, Depends, HTTPException, status, UploadFile, File
+from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
@@ -8,7 +11,15 @@ import models, schemas, database, auth, crud, post_crud, comment_crud
 # 创建数据库表
 models.Base.metadata.create_all(bind=database.engine)
 
+# 确保上传目录存在
+UPLOAD_DIR = "uploads"
+if not os.path.exists(UPLOAD_DIR):
+    os.makedirs(UPLOAD_DIR)
+
 app = FastAPI()
+
+# 挂载静态文件目录，用于访问上传的图片
+app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 
 # 配置 CORS
 origins = [
@@ -71,6 +82,31 @@ def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db:
 def read_users_me(current_user: schemas.User = Depends(auth.get_current_user)):
     return current_user
 
+@app.put("/api/users/me/avatar", response_model=schemas.User)
+def update_avatar(avatar_url: str, current_user: schemas.User = Depends(auth.get_current_user), db: Session = Depends(database.get_db)):
+    return crud.update_user_avatar(db, current_user.id, avatar_url)
+
+@app.get("/api/users/me/posts", response_model=list[schemas.Post])
+def read_my_posts(current_user: schemas.User = Depends(auth.get_current_user), db: Session = Depends(database.get_db)):
+    return post_crud.get_posts_by_user(db, current_user.id)
+
+# --- 管理员路由 ---
+@app.get("/api/admin/users", response_model=list[schemas.User])
+def get_all_users(current_user: schemas.User = Depends(auth.get_current_user), db: Session = Depends(database.get_db)):
+    if not current_user.is_superuser:
+        raise HTTPException(status_code=403, detail="Not authorized")
+    return crud.get_all_users(db)
+
+# --- 文件上传 ---
+@app.post("/api/upload")
+async def upload_file(file: UploadFile = File(...)):
+    file_location = f"{UPLOAD_DIR}/{file.filename}"
+    with open(file_location, "wb+") as file_object:
+        shutil.copyfileobj(file.file, file_object)
+    # 返回相对路径，假设前端通过 /uploads/filename 访问
+    # 注意：生产环境应使用完整的 URL 或 CDN
+    return {"url": f"/uploads/{file.filename}"}
+
 # --- 帖子路由 ---
 
 @app.post("/api/posts/", response_model=schemas.Post)
@@ -85,3 +121,28 @@ def create_post(
 def read_posts(skip: int = 0, limit: int = 100, db: Session = Depends(database.get_db)):
     posts = post_crud.get_posts(db, skip=skip, limit=limit)
     return posts
+
+@app.get("/api/posts/{post_id}", response_model=schemas.Post)
+def read_post(post_id: int, db: Session = Depends(database.get_db)):
+    post = db.query(models.Post).filter(models.Post.id == post_id).first()
+    if post is None:
+        raise HTTPException(status_code=404, detail="Post not found")
+    post.owner_username = post.owner.username # 填充作者名
+    return post
+
+@app.delete("/api/posts/{post_id}")
+def delete_post(
+    post_id: int, 
+    db: Session = Depends(database.get_db),
+    current_user: schemas.User = Depends(auth.get_current_user)
+):
+    post = db.query(models.Post).filter(models.Post.id == post_id).first()
+    if not post:
+        raise HTTPException(status_code=404, detail="Post not found")
+    
+    # 只有作者或管理员可以删除
+    if post.owner_id != current_user.id and not current_user.is_superuser:
+        raise HTTPException(status_code=403, detail="Not authorized")
+        
+    post_crud.delete_post(db, post_id)
+    return {"message": "Post deleted"}

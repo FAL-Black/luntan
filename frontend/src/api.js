@@ -58,4 +58,30 @@ export const createComment = (postId, content) => {
     return api.post(`/posts/${postId}/comments/`, { content });
 };
 
+export const uploadFile = (file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return api.post('/upload', formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data'
+        }
+    });
+};
+
+export const getAllUsers = (skip = 0, limit = 100) => {
+    return api.get(`/admin/users?skip=${skip}&limit=${limit}`);
+};
+
+export const deletePost = (postId) => {
+    return api.delete(`/posts/${postId}`);
+};
+
+export const updateAvatar = (avatarUrl) => {
+    return api.put('/users/me/avatar', null, { params: { avatar_url: avatarUrl } });
+};
+
+export const getMyPosts = () => {
+    return api.get('/users/me/posts');
+};
+
 export default api;

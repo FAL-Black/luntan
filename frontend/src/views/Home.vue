@@ -47,29 +47,47 @@ onMounted(() => {
 <template>
   <div class="home-container">
     <header class="header">
-      <h1>技术论坛</h1>
+      <div class="logo">Luntan</div>
       <div v-if="user" class="user-actions">
-        <span>欢迎, {{ user.username }}</span>
-        <router-link to="/create-post" class="btn primary small">发布帖子</router-link>
-        <button @click="logout" class="btn danger small">退出</button>
+        <router-link to="/create-post" class="btn primary round">＋ 发动态</router-link>
+        <div class="user-menu">
+            <span class="username">{{ user.username }}</span>
+            <router-link to="/profile" class="btn text">主页</router-link>
+            <button @click="logout" class="btn text danger">退出</button>
+        </div>
       </div>
       <div v-else class="guest-actions">
-        <router-link to="/login" class="btn primary small">登录</router-link>
-        <router-link to="/register" class="btn secondary small">注册</router-link>
+        <router-link to="/login" class="btn text">登录</router-link>
+        <router-link to="/register" class="btn primary round">注册</router-link>
       </div>
     </header>
 
-    <main class="post-list">
-      <h2>最新帖子</h2>
+    <main class="feed">
       <div v-if="posts.length === 0" class="empty-state">
-        暂无帖子，快来发布第一条吧！
+        还没有动态，去发布第一条吧！
       </div>
       <div v-for="post in posts" :key="post.id" class="post-card">
-        <h3>{{ post.title }}</h3>
-        <p class="post-content">{{ post.content }}</p>
-        <div class="post-meta">
-          <span>作者ID: {{ post.owner_id }}</span>
-          <span>发布时间: {{ formatDate(post.created_at) }}</span>
+        <div class="post-header">
+            <div class="avatar-placeholder">{{ (post.owner_username || 'U')[0].toUpperCase() }}</div>
+            <div class="post-info">
+                <span class="author-name">{{ post.owner_username || 'Unknown' }}</span>
+                <span class="post-time">{{ formatDate(post.created_at) }}</span>
+            </div>
+        </div>
+        
+        <router-link :to="'/post/' + post.id" class="post-content-link">
+            <h3 class="post-title">{{ post.title }}</h3>
+            <p class="post-text">{{ post.content.substring(0, 150) }}{{ post.content.length > 150 ? '...' : '' }}</p>
+            <div v-if="post.image_url" class="post-image">
+                <img :src="post.image_url" alt="Post image" loading="lazy" />
+            </div>
+        </router-link>
+
+        <div class="post-footer">
+            <router-link :to="'/post/' + post.id" class="action-btn">
+                💬 评论
+            </router-link>
+            <button class="action-btn">👍 点赞</button>
         </div>
       </div>
     </main>
@@ -78,65 +96,143 @@ onMounted(() => {
 
 <style scoped>
 .home-container {
-  max-width: 800px;
+  max-width: 700px;
   margin: 0 auto;
-  padding: 1rem;
+  padding-bottom: 2rem;
 }
 .header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 2rem;
-  padding-bottom: 1rem;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+  position: sticky;
+  top: 0;
+  z-index: 100;
   border-bottom: 1px solid #eee;
 }
+.logo {
+  font-size: 1.5rem;
+  font-weight: 900;
+  color: #42b983;
+}
+.user-actions, .guest-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+.user-menu {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.username {
+    font-weight: bold;
+    margin-right: 0.5rem;
+}
+
 .btn {
-  padding: 0.5rem 1rem;
+  padding: 0.5rem 1.2rem;
   border: none;
   border-radius: 4px;
   cursor: pointer;
   text-decoration: none;
-  margin-left: 0.5rem;
-  font-size: 0.9rem;
+  font-size: 0.95rem;
+  transition: all 0.2s;
 }
+.btn.round { border-radius: 20px; }
 .btn.primary { background-color: #42b983; color: white; }
-.btn.secondary { background-color: #6c757d; color: white; }
-.btn.danger { background-color: #dc3545; color: white; }
+.btn.primary:hover { background-color: #3aa876; }
+.btn.text { background: none; color: #666; padding: 0.5rem; }
+.btn.text:hover { color: #333; background: #f5f5f5; border-radius: 4px;}
+.btn.danger:hover { color: #e74c3c; }
 
+.feed {
+  padding: 1rem;
+}
 .post-card {
   background: #fff;
-  border: 1px solid #e9ecef;
   border-radius: 8px;
   padding: 1.5rem;
   margin-bottom: 1rem;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  transition: transform 0.2s;
 }
-.post-card h3 { margin-top: 0; }
-.post-meta {
-  margin-top: 1rem;
-  font-size: 0.85rem;
-  color: #6c757d;
-  display: flex;
-  gap: 1rem;
-  align-items: center;
+.post-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
 }
-.post-title-link {
-  color: #2c3e50;
-  text-decoration: none;
+.post-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1rem;
 }
-.post-title-link:hover {
-  color: #42b983;
+.avatar-placeholder {
+    width: 40px;
+    height: 40px;
+    background: #42b983;
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    margin-right: 10px;
 }
-.read-more {
-  margin-left: auto;
-  color: #42b983;
-  text-decoration: none;
+.post-info {
+    display: flex;
+    flex-direction: column;
 }
-.empty-state {
-  text-align: center;
-  padding: 3rem;
-  color: #6c757d;
-  background: #f8f9fa;
-  border-radius: 8px;
+.author-name {
+    font-weight: bold;
+    font-size: 1rem;
+    color: #333;
+}
+.post-time {
+    font-size: 0.8rem;
+    color: #999;
+}
+.post-content-link {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+}
+.post-title {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.2rem;
+}
+.post-text {
+    font-size: 1rem;
+    line-height: 1.6;
+    color: #444;
+    margin-bottom: 1rem;
+}
+.post-image img {
+    max-width: 100%;
+    border-radius: 8px;
+    max-height: 400px;
+    object-fit: cover;
+}
+.post-footer {
+    border-top: 1px solid #f0f0f0;
+    margin-top: 1rem;
+    padding-top: 0.8rem;
+    display: flex;
+    justify-content: space-around;
+}
+.action-btn {
+    background: none;
+    border: none;
+    color: #666;
+    cursor: pointer;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    text-decoration: none;
+}
+.action-btn:hover {
+    color: #42b983;
 }
 </style>

@@ -17,3 +17,14 @@ def create_user(db: Session, user: schemas.UserCreate):
     db.commit()
     db.refresh(db_user)
     return db_user
+
+def update_user_avatar(db: Session, user_id: int, avatar_url: str):
+    db_user = get_user(db, user_id)
+    if db_user:
+        db_user.avatar_url = avatar_url
+        db.commit()
+        db.refresh(db_user)
+    return db_user
+
+def get_all_users(db: Session, skip: int = 0, limit: int = 100):
+    return db.query(models.User).offset(skip).limit(limit).all()

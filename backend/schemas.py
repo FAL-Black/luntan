@@ -14,6 +14,7 @@ class TokenData(BaseModel):
 class PostBase(BaseModel):
     title: str
     content: str
+    image_url: Optional[str] = None
 
 class PostCreate(PostBase):
     pass
@@ -22,6 +23,7 @@ class Post(PostBase):
     id: int
     owner_id: int
     created_at: datetime
+    owner_username: Optional[str] = None # 用于前端显示作者名
 
     class Config:
         from_attributes = True
@@ -55,6 +57,8 @@ class UserCreate(UserBase):
 class User(UserBase):
     id: int
     is_active: bool
+    is_superuser: bool
+    avatar_url: Optional[str] = None
     # posts: List[Post] = [] 
 
     class Config:

@@ -20,8 +20,9 @@ const handleRegister = async () => {
       password: password.value
     });
     
-    alert('注册成功！请登录');
-    router.push('/login');
+    // 移除弹窗，使用更友好的方式提示，或者直接跳转并在登录页显示提示
+    // 这里我们直接跳转，并可以通过 URL 参数传递成功信息
+    router.push({ path: '/login', query: { registered: 'true' } });
   } catch (error) {
     console.error(error);
     if (error.response) {

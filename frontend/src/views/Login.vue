@@ -1,16 +1,25 @@
 <script setup>
-import { ref } from 'vue';
-import { useRouter } from 'vue-router';
+import { ref, onMounted } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
 import api from '../api';
 
 const username = ref('');
 const password = ref('');
 const errorMsg = ref('');
+const successMsg = ref('');
 const isLoading = ref(false);
 const router = useRouter();
+const route = useRoute();
+
+onMounted(() => {
+    if (route.query.registered === 'true') {
+        successMsg.value = '注册成功！请登录';
+    }
+});
 
 const handleLogin = async () => {
   errorMsg.value = '';
+  successMsg.value = '';
   isLoading.value = true;
   try {
     const formData = new FormData();
@@ -22,7 +31,13 @@ const handleLogin = async () => {
     localStorage.setItem('token', res.data.access_token);
     localStorage.setItem('username', username.value);
     
-    router.push('/');
+    // 获取用户信息以判断是否为管理员
+    const userRes = await api.get('/users/me');
+    if (userRes.data.is_superuser) {
+        router.push('/admin');
+    } else {
+        router.push('/');
+    }
   } catch (error) {
     console.error(error);
     errorMsg.value = '用户名或密码错误，请重试';
@@ -62,6 +77,10 @@ const handleLogin = async () => {
           />
         </div>
         
+        <p v-if="successMsg" class="success-message">
+          <span class="icon">✅</span> {{ successMsg }}
+        </p>
+
         <p v-if="errorMsg" class="error-message">
           <span class="icon">⚠️</span> {{ errorMsg }}
         </p>
@@ -137,6 +156,17 @@ const handleLogin = async () => {
   margin: 0.5rem 0 0;
   color: #7f8c8d;
   font-size: 0.95rem;
+}
+
+.success-message {
+  color: #27ae60;
+  background: #eafaf1;
+  padding: 0.8rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
 }
 
 .form-group {

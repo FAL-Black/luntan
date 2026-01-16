@@ -10,7 +10,9 @@ class User(Base):
     email = Column(String(255), unique=True, index=True)
     username = Column(String(255), unique=True, index=True)
     hashed_password = Column(String(255))
+    avatar_url = Column(String(255), nullable=True)
     is_active = Column(Boolean, default=True)
+    is_superuser = Column(Boolean, default=False)
 
     posts = relationship("Post", back_populates="owner")
     comments = relationship("Comment", back_populates="owner")
@@ -21,6 +23,7 @@ class Post(Base):
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String(255), index=True)
     content = Column(Text)
+    image_url = Column(String(255), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     owner_id = Column(Integer, ForeignKey("users.id"))
 
