@@ -118,6 +118,19 @@ onMounted(() => {
   color: #6c757d;
   display: flex;
   gap: 1rem;
+  align-items: center;
+}
+.post-title-link {
+  color: #2c3e50;
+  text-decoration: none;
+}
+.post-title-link:hover {
+  color: #42b983;
+}
+.read-more {
+  margin-left: auto;
+  color: #42b983;
+  text-decoration: none;
 }
 .empty-state {
   text-align: center;

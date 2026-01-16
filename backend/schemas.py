@@ -26,6 +26,24 @@ class Post(PostBase):
     class Config:
         from_attributes = True
 
+# --- Comment Schemas ---
+class CommentBase(BaseModel):
+    content: str
+
+class CommentCreate(CommentBase):
+    pass
+
+class Comment(CommentBase):
+    id: int
+    owner_id: int
+    post_id: int
+    created_at: datetime
+    # 为了方便前端显示，直接把用户名也带上
+    owner_username: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
 # --- User Schemas ---
 class UserBase(BaseModel):
     username: str

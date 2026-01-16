@@ -46,4 +46,16 @@ export const createPost = (postData) => {
     return api.post('/posts/', postData);
 };
 
+export const getPost = (postId) => {
+    return api.get(`/posts/${postId}`);
+};
+
+export const getComments = (postId) => {
+    return api.get(`/posts/${postId}/comments/`);
+};
+
+export const createComment = (postId, content) => {
+    return api.post(`/posts/${postId}/comments/`, { content });
+};
+
 export default api;
