@@ -5,6 +5,9 @@ import { createPost, uploadFile } from '../api';
 
 const title = ref('');
 const content = ref('');
+const category = ref('');
+const tags = ref('');
+const isOriginal = ref(true);
 const selectedFile = ref(null);
 const previewUrl = ref(null);
 const isUploading = ref(false);
@@ -40,7 +43,10 @@ const handleCreatePost = async () => {
     await createPost({
       title: title.value,
       content: content.value,
-      image_url: imageUrl
+      image_url: imageUrl,
+      category: category.value || '未分类',
+      tags: tags.value,
+      is_original: isOriginal.value
     });
     
     router.push('/');
@@ -69,6 +75,27 @@ const handleCreatePost = async () => {
         <textarea v-model="content" placeholder="分享你的新鲜事..." rows="6" required class="content-input"></textarea>
       </div>
 
+      <div class="meta-row">
+        <div class="form-group half">
+            <select v-model="category" class="select-input">
+                <option value="">选择分类</option>
+                <option value="技术">技术</option>
+                <option value="生活">生活</option>
+                <option value="闲聊">闲聊</option>
+                <option value="分享">分享</option>
+            </select>
+        </div>
+        <div class="form-group half">
+            <input v-model="tags" type="text" placeholder="标签 (用逗号分隔)" class="tags-input" />
+        </div>
+      </div>
+
+      <div class="options-row">
+        <label class="checkbox-label">
+            <input type="checkbox" v-model="isOriginal"> 声明原创
+        </label>
+      </div>
+
       <div class="image-upload-section">
         <label for="file-upload" class="upload-btn">
           📷 添加图片
@@ -94,7 +121,7 @@ const handleCreatePost = async () => {
 
 <style scoped>
 .create-post-container {
-  max-width: 600px;
+  max-width: 800px;
   margin: 2rem auto;
   padding: 2rem;
   background: #fff;
@@ -123,7 +150,7 @@ const handleCreatePost = async () => {
 }
 .title-input {
   width: 100%;
-  font-size: 1.2rem;
+  font-size: 1.5rem;
   font-weight: bold;
   border: none;
   border-bottom: 1px solid #eee;
@@ -132,12 +159,39 @@ const handleCreatePost = async () => {
 }
 .content-input {
   width: 100%;
-  font-size: 1rem;
+  font-size: 1.1rem;
   border: none;
   resize: none;
   outline: none;
   font-family: inherit;
+  line-height: 1.6;
 }
+
+.meta-row {
+    display: flex;
+    gap: 1rem;
+}
+.half { flex: 1; }
+.select-input, .tags-input {
+    width: 100%;
+    padding: 0.8rem;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    background: #f9f9f9;
+}
+
+.options-row {
+    margin-bottom: 0.5rem;
+}
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: #666;
+}
+
 .upload-btn {
   display: inline-block;
   padding: 0.5rem 1rem;
@@ -180,12 +234,13 @@ const handleCreatePost = async () => {
   background: #42b983;
   color: white;
   border: none;
-  padding: 0.8rem 2rem;
+  padding: 0.8rem 3rem;
   border-radius: 24px;
   font-weight: bold;
   cursor: pointer;
   float: right;
   transition: background 0.2s;
+  font-size: 1.1rem;
 }
 .submit-btn:hover:not(:disabled) {
   background: #3aa876;

@@ -38,8 +38,12 @@ api.interceptors.response.use(
     }
 );
 
-export const getPosts = (skip = 0, limit = 100) => {
-    return api.get(`/posts/?skip=${skip}&limit=${limit}`);
+export const getPosts = (skip = 0, limit = 100, category = null) => {
+    let url = `/posts/?skip=${skip}&limit=${limit}`;
+    if (category) {
+        url += `&category=${category}`;
+    }
+    return api.get(url);
 };
 
 export const createPost = (postData) => {
@@ -80,8 +84,28 @@ export const updateAvatar = (avatarUrl) => {
     return api.put('/users/me/avatar', null, { params: { avatar_url: avatarUrl } });
 };
 
+export const updateProfile = (profileData) => {
+    return api.put('/users/me', profileData);
+};
+
 export const getMyPosts = () => {
     return api.get('/users/me/posts');
+};
+
+export const getUserProfile = (userId) => {
+    return api.get(`/users/${userId}`);
+};
+
+export const followUser = (userId) => {
+    return api.post(`/users/${userId}/follow`);
+};
+
+export const likePost = (postId) => {
+    return api.post(`/posts/${postId}/like`);
+};
+
+export const collectPost = (postId) => {
+    return api.post(`/posts/${postId}/collect`);
 };
 
 export default api;

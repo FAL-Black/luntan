@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from datetime import timedelta
+from typing import Optional
 import models, schemas, database, auth, crud, post_crud, comment_crud
 
 # 创建数据库表
@@ -80,7 +81,14 @@ def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db:
 
 @app.get("/api/users/me", response_model=schemas.User)
 def read_users_me(current_user: schemas.User = Depends(auth.get_current_user)):
+    crud.enrich_user(current_user, current_user.id)
     return current_user
+
+@app.put("/api/users/me", response_model=schemas.User)
+def update_profile(profile: schemas.UserUpdate, current_user: schemas.User = Depends(auth.get_current_user), db: Session = Depends(database.get_db)):
+    updated_user = crud.update_user_profile(db, current_user.id, profile)
+    crud.enrich_user(updated_user, current_user.id)
+    return updated_user
 
 @app.put("/api/users/me/avatar", response_model=schemas.User)
 def update_avatar(avatar_url: str, current_user: schemas.User = Depends(auth.get_current_user), db: Session = Depends(database.get_db)):
@@ -88,7 +96,25 @@ def update_avatar(avatar_url: str, current_user: schemas.User = Depends(auth.get
 
 @app.get("/api/users/me/posts", response_model=list[schemas.Post])
 def read_my_posts(current_user: schemas.User = Depends(auth.get_current_user), db: Session = Depends(database.get_db)):
-    return post_crud.get_posts_by_user(db, current_user.id)
+    return post_crud.get_posts_by_user(db, current_user.id, current_user.id)
+
+@app.get("/api/users/{user_id}", response_model=schemas.User)
+def read_user_profile(user_id: int, current_user: Optional[schemas.User] = Depends(auth.get_current_user_optional), db: Session = Depends(database.get_db)):
+    user = crud.get_user(db, user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    current_user_id = current_user.id if current_user else None
+    crud.enrich_user(user, current_user_id)
+    return user
+
+@app.post("/api/users/{user_id}/follow")
+def follow_user(user_id: int, current_user: schemas.User = Depends(auth.get_current_user), db: Session = Depends(database.get_db)):
+    if user_id == current_user.id:
+        raise HTTPException(status_code=400, detail="Cannot follow yourself")
+    is_following = crud.follow_user(db, current_user.id, user_id)
+    if is_following is None:
+        raise HTTPException(status_code=404, detail="User not found")
+    return {"is_following": is_following}
 
 # --- 管理员路由 ---
 @app.get("/api/admin/users", response_model=list[schemas.User])
@@ -118,17 +144,38 @@ def create_post(
     return post_crud.create_user_post(db=db, post=post, user_id=current_user.id)
 
 @app.get("/api/posts/", response_model=list[schemas.Post])
-def read_posts(skip: int = 0, limit: int = 100, db: Session = Depends(database.get_db)):
-    posts = post_crud.get_posts(db, skip=skip, limit=limit)
+def read_posts(
+    skip: int = 0, 
+    limit: int = 100, 
+    category: Optional[str] = None,
+    current_user: Optional[schemas.User] = Depends(auth.get_current_user_optional),
+    db: Session = Depends(database.get_db)
+):
+    current_user_id = current_user.id if current_user else None
+    posts = post_crud.get_posts(db, skip=skip, limit=limit, current_user_id=current_user_id, category=category)
     return posts
 
 @app.get("/api/posts/{post_id}", response_model=schemas.Post)
-def read_post(post_id: int, db: Session = Depends(database.get_db)):
-    post = db.query(models.Post).filter(models.Post.id == post_id).first()
+def read_post(post_id: int, current_user: Optional[schemas.User] = Depends(auth.get_current_user_optional), db: Session = Depends(database.get_db)):
+    current_user_id = current_user.id if current_user else None
+    post = post_crud.get_post(db, post_id, current_user_id)
     if post is None:
         raise HTTPException(status_code=404, detail="Post not found")
-    post.owner_username = post.owner.username # 填充作者名
     return post
+
+@app.post("/api/posts/{post_id}/like")
+def like_post(post_id: int, current_user: schemas.User = Depends(auth.get_current_user), db: Session = Depends(database.get_db)):
+    result = post_crud.like_post(db, post_id, current_user.id)
+    if result is None:
+        raise HTTPException(status_code=404, detail="Post not found")
+    return {"is_liked": result}
+
+@app.post("/api/posts/{post_id}/collect")
+def collect_post(post_id: int, current_user: schemas.User = Depends(auth.get_current_user), db: Session = Depends(database.get_db)):
+    result = post_crud.collect_post(db, post_id, current_user.id)
+    if result is None:
+        raise HTTPException(status_code=404, detail="Post not found")
+    return {"is_collected": result}
 
 @app.delete("/api/posts/{post_id}")
 def delete_post(
