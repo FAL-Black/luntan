@@ -70,3 +70,18 @@ def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db:
 @app.get("/api/users/me", response_model=schemas.User)
 def read_users_me(current_user: schemas.User = Depends(auth.get_current_user)):
     return current_user
+
+# --- 帖子路由 ---
+
+@app.post("/api/posts/", response_model=schemas.Post)
+def create_post(
+    post: schemas.PostCreate,
+    db: Session = Depends(database.get_db),
+    current_user: schemas.User = Depends(auth.get_current_user)
+):
+    return post_crud.create_user_post(db=db, post=post, user_id=current_user.id)
+
+@app.get("/api/posts/", response_model=list[schemas.Post])
+def read_posts(skip: int = 0, limit: int = 100, db: Session = Depends(database.get_db)):
+    posts = post_crud.get_posts(db, skip=skip, limit=limit)
+    return posts

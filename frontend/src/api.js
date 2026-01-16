@@ -38,4 +38,12 @@ api.interceptors.response.use(
     }
 );
 
+export const getPosts = (skip = 0, limit = 100) => {
+    return api.get(`/posts/?skip=${skip}&limit=${limit}`);
+};
+
+export const createPost = (postData) => {
+    return api.post('/posts/', postData);
+};
+
 export default api;
