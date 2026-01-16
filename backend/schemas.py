@@ -2,6 +2,14 @@ from pydantic import BaseModel
 from typing import List, Optional
 from datetime import datetime
 
+# --- Token Schemas ---
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+class TokenData(BaseModel):
+    username: Optional[str] = None
+
 # --- Post Schemas ---
 class PostBase(BaseModel):
     title: str
@@ -29,7 +37,7 @@ class UserCreate(UserBase):
 class User(UserBase):
     id: int
     is_active: bool
-    # posts: List[Post] = [] # 暂时注释，避免循环依赖或加载过多数据
+    # posts: List[Post] = [] 
 
     class Config:
         from_attributes = True

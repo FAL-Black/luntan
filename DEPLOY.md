@@ -11,7 +11,34 @@ sudo dnf update -y
 sudo dnf install -y git python3-pip python3-devel nginx
 ```
 
-### 安装 Node.js (使用 NodeSource 源)
+> **💡 国内服务器加速提示**：
+> 如果您在中国大陆地区的服务器上部署，建议使用国内镜像源加速下载。
+>
+> **1. Git 加速 (强烈推荐使用 Gitee)**
+> 由于 GitHub 镜像源不稳定，最稳妥的方式是使用 [Gitee (码云)](https://gitee.com/)。
+>
+> 1. 在 Gitee 上创建一个新仓库。
+> 2. 在本地电脑上推送代码到 Gitee：
+>    ```bash
+>    git remote add gitee https://gitee.com/您的用户名/仓库名.git
+>    git push -u gitee main
+>    ```
+> 3. 在服务器上从 Gitee 克隆：
+>    ```bash
+>    sudo git clone https://gitee.com/您的用户名/仓库名.git luntan
+>    ```
+>
+> **2. Pip 加速 (阿里云源)**
+> ```bash
+> pip config set global.index-url https://mirrors.aliyun.com/pypi/simple/
+> ```
+>
+> **3. NPM 加速 (淘宝/阿里云源)**
+> ```bash
+> npm config set registry https://registry.npmmirror.com
+> ```
+
+### 安装 MySQL 8.0Node.js (使用 NodeSource 源)
 
 ```bash
 curl -fsSL https://rpm.nodesource.com/setup_20.x | sudo bash -
