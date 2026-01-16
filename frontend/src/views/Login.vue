@@ -6,88 +6,200 @@ import api from '../api';
 const username = ref('');
 const password = ref('');
 const errorMsg = ref('');
+const isLoading = ref(false);
 const router = useRouter();
 
 const handleLogin = async () => {
+  errorMsg.value = '';
+  isLoading.value = true;
   try {
-    // FastAPI 的 OAuth2PasswordRequestForm 需要 form data 格式
     const formData = new FormData();
     formData.append('username', username.value);
     formData.append('password', password.value);
 
     const res = await api.post('/token', formData);
     
-    // 登录成功，保存 token
     localStorage.setItem('token', res.data.access_token);
     localStorage.setItem('username', username.value);
     
-    // 跳转到首页
     router.push('/');
   } catch (error) {
     console.error(error);
-    errorMsg.value = '登录失败，请检查用户名或密码';
+    errorMsg.value = '用户名或密码错误，请重试';
+  } finally {
+    isLoading.value = false;
   }
 };
 </script>
 
 <template>
-  <div class="auth-container">
-    <h2>登录</h2>
-    <form @submit.prevent="handleLogin">
-      <div class="form-group">
-        <label>用户名</label>
-        <input v-model="username" type="text" required />
+  <div class="login-wrapper">
+    <div class="login-card">
+      <div class="card-header">
+        <h2>欢迎回来</h2>
+        <p>登录您的技术论坛账号</p>
       </div>
-      <div class="form-group">
-        <label>密码</label>
-        <input v-model="password" type="password" required />
+      
+      <form @submit.prevent="handleLogin">
+        <div class="form-group">
+          <label>用户名</label>
+          <input 
+            v-model="username" 
+            type="text" 
+            placeholder="请输入用户名"
+            required 
+            :disabled="isLoading"
+          />
+        </div>
+        <div class="form-group">
+          <label>密码</label>
+          <input 
+            v-model="password" 
+            type="password" 
+            placeholder="请输入密码"
+            required 
+            :disabled="isLoading"
+          />
+        </div>
+        
+        <p v-if="errorMsg" class="error-message">
+          <span class="icon">⚠️</span> {{ errorMsg }}
+        </p>
+        
+        <button type="submit" :class="{ 'loading': isLoading }" :disabled="isLoading">
+          {{ isLoading ? '登录中...' : '立即登录' }}
+        </button>
+      </form>
+      
+      <div class="card-footer">
+        还没有账号？ <router-link to="/register">去注册一个</router-link>
       </div>
-      <p v-if="errorMsg" class="error">{{ errorMsg }}</p>
-      <button type="submit">登录</button>
-    </form>
-    <p class="link">还没有账号？ <router-link to="/register">去注册</router-link></p>
+    </div>
   </div>
 </template>
 
 <style scoped>
-.auth-container {
+.login-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  padding: 1rem;
+}
+
+.login-card {
+  background: white;
+  padding: 2.5rem;
+  border-radius: 16px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+  width: 100%;
   max-width: 400px;
-  margin: 2rem auto;
-  padding: 2rem;
-  border: 1px solid #ddd;
-  border-radius: 8px;
+  transition: transform 0.3s ease;
 }
+
+.login-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+}
+
+.card-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.card-header h2 {
+  margin: 0;
+  color: #2c3e50;
+  font-size: 1.8rem;
+}
+
+.card-header p {
+  margin: 0.5rem 0 0;
+  color: #7f8c8d;
+  font-size: 0.95rem;
+}
+
 .form-group {
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
 }
+
 label {
   display: block;
   margin-bottom: 0.5rem;
+  color: #34495e;
+  font-weight: 500;
+  font-size: 0.9rem;
 }
+
 input {
   width: 100%;
-  padding: 0.5rem;
-  border: 1px solid #ccc;
-  border-radius: 4px;
+  padding: 0.8rem 1rem;
+  border: 2px solid #ecf0f1;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: border-color 0.3s, box-shadow 0.3s;
+  box-sizing: border-box; /* 确保 padding 不会撑大宽度 */
 }
+
+input:focus {
+  outline: none;
+  border-color: #42b983;
+  box-shadow: 0 0 0 3px rgba(66, 185, 131, 0.1);
+}
+
 button {
   width: 100%;
-  padding: 0.75rem;
+  padding: 0.9rem;
   background-color: #42b983;
   color: white;
   border: none;
-  border-radius: 4px;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
   cursor: pointer;
+  transition: background-color 0.3s, transform 0.1s;
 }
-button:hover {
+
+button:hover:not(:disabled) {
   background-color: #3aa876;
 }
-.error {
-  color: red;
-  margin-bottom: 1rem;
+
+button:active:not(:disabled) {
+  transform: scale(0.98);
 }
-.link {
-  margin-top: 1rem;
+
+button:disabled {
+  background-color: #a8d5c2;
+  cursor: not-allowed;
+}
+
+.error-message {
+  background-color: #fff2f2;
+  color: #e74c3c;
+  padding: 0.75rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.card-footer {
+  margin-top: 2rem;
   text-align: center;
+  font-size: 0.9rem;
+  color: #7f8c8d;
+}
+
+.card-footer a {
+  color: #42b983;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.card-footer a:hover {
+  text-decoration: underline;
 }
 </style>
